@@ -4,14 +4,14 @@ var renderer=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
 var PAPER=0xF3F0EA,SKY_D=new T.Color(PAPER),SKY_N=new T.Color(0x1a1c2e);
-var scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(PAPER,170,380);
-var camera=new T.PerspectiveCamera(30,1,.3,700);camera.position.set(-78,84,96);
-var controls=new T.OrbitControls(camera,cv);controls.target.set(8,0,0);controls.enableDamping=true;controls.dampingFactor=.08;
-controls.maxPolarAngle=Math.PI*.47;controls.minDistance=6;controls.maxDistance=260;
+var scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(PAPER,260,560);
+var camera=new T.PerspectiveCamera(30,1,.3,900);camera.position.set(-70,120,150);
+var controls=new T.OrbitControls(camera,cv);controls.target.set(46,0,-2);controls.enableDamping=true;controls.dampingFactor=.08;
+controls.maxPolarAngle=Math.PI*.47;controls.minDistance=6;controls.maxDistance=380;
 /* 분해도와 같은 조명: 반구광 0.95 + 주광 0.7 + 보조광 0.28 */
 var hemi=new T.HemisphereLight(0xffffff,0xd9cfbb,.95);scene.add(hemi);
-var sun=new T.DirectionalLight(0xfffaf0,.7);sun.position.set(-45,80,40);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
-(function(c){c.left=-70;c.right=70;c.top=60;c.bottom=-60;c.near=10;c.far=230})(sun.shadow.camera);sun.shadow.bias=-.0003;sun.shadow.normalBias=.03;scene.add(sun,sun.target);
+var sun=new T.DirectionalLight(0xfffaf0,.7);sun.position.set(5,80,40);sun.target.position.set(50,0,0);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
+(function(c){c.left=-125;c.right=125;c.top=75;c.bottom=-75;c.near=10;c.far=260})(sun.shadow.camera);sun.shadow.bias=-.0003;sun.shadow.normalBias=.03;scene.add(sun,sun.target);
 var fillL=new T.DirectionalLight(0xffffff,.28);fillL.position.set(50,30,-60);scene.add(fillL);
 function mat(c,o){o=o||{};var m=new T.MeshStandardMaterial({color:c,roughness:o.r!==undefined?o.r:.85,metalness:o.m||0,emissive:o.e||0,emissiveIntensity:o.ei||0,vertexColors:!!o.vc,side:o.ds?T.DoubleSide:T.FrontSide});
   if(o.op!==undefined){m.transparent=true;m.opacity=o.op;m.depthWrite=false}return m}
@@ -66,6 +66,22 @@ HF.prototype.relax=function(i0,j0,i1,j1,maxD,it){var s=this,h=s.h,n=s.nx;i0=Math
     for(var q=0;q<2;q++){var kk=q?(j<s.nz-1?k+n:-1):(i<s.nx-1?k+1:-1);if(kk<0)continue;var d=h[k]-h[kk];
       if(d>maxD){var m=(d-maxD)/2;if(s.cap){m=Math.min(m,s.cap[kk]-h[kk]);if(m<=0)continue}h[k]-=m;h[kk]+=m}else if(-d>maxD){var m2=(-d-maxD)/2;if(s.cap){m2=Math.min(m2,s.cap[k]-h[k]);if(m2<=0)continue}h[k]+=m2;h[kk]-=m2}}}
   s.mark(i0-1,j0-1,i1+1,j1+1)};
+/* 직사각형(진행방향 ux,uz · 반폭 hw · 반길이 hl) 안에서 y보다 낮은 곳을 흙 V 한도로 메운다. 쓴 부피를 돌려준다 */
+HF.prototype.fill=function(x,z,y,ux,uz,hw,hl,V){var s=this,r=Math.max(hw,hl)+s.dx,i0=Math.floor((x-r-s.x0)/s.dx),i1=Math.ceil((x+r-s.x0)/s.dx),j0=Math.floor((z-r-s.z0)/s.dz),j1=Math.ceil((z+r-s.z0)/s.dz),U=0;
+  for(var j=Math.max(0,j0);j<=Math.min(s.nz-1,j1)&&U<V;j++)for(var i=Math.max(0,i0);i<=Math.min(s.nx-1,i1)&&U<V;i++){var px=s.x0+i*s.dx-x,pz=s.z0+j*s.dz-z;
+    if(Math.abs(px*ux+pz*uz)>hl||Math.abs(-px*uz+pz*ux)>hw)continue;var k=j*s.nx+i;if(s.h[k]<y){var dv=Math.min((y-s.h[k])*s.ca,V-U);s.h[k]+=dv/s.ca;U+=dv}}
+  if(U>0)s.mark(i0,j0,i1,j1);return U};
+/* 같은 직사각형 안을 y 높이로 고른다 (k = 한 번에 다가가는 비율). 움직인 부피를 돌려준다 */
+HF.prototype.level=function(x,z,y,ux,uz,hw,hl,k){var s=this,r=Math.max(hw,hl)+s.dx,i0=Math.floor((x-r-s.x0)/s.dx),i1=Math.ceil((x+r-s.x0)/s.dx),j0=Math.floor((z-r-s.z0)/s.dz),j1=Math.ceil((z+r-s.z0)/s.dz),U=0;
+  for(var j=Math.max(0,j0);j<=Math.min(s.nz-1,j1);j++)for(var i=Math.max(0,i0);i<=Math.min(s.nx-1,i1);i++){var px=s.x0+i*s.dx-x,pz=s.z0+j*s.dz-z;
+    if(Math.abs(px*ux+pz*uz)>hl||Math.abs(-px*uz+pz*ux)>hw)continue;var q=j*s.nx+i,d=(y-s.h[q])*k;if(Math.abs(d)>1e-4){s.h[q]+=d;U+=Math.abs(d)*s.ca}}
+  if(U>0)s.mark(i0,j0,i1,j1);return U};
+/* 축에 나란한 작은 상자 안에 흙 V를 고르게 얹는다 */
+HF.prototype.addBox=function(x,z,hx,hz,V){var s=this,i0=Math.max(0,Math.ceil((x-hx-s.x0)/s.dx)),i1=Math.min(s.nx-1,Math.floor((x+hx-s.x0)/s.dx)),j0=Math.max(0,Math.ceil((z-hz-s.z0)/s.dz)),j1=Math.min(s.nz-1,Math.floor((z+hz-s.z0)/s.dz)),n=(i1-i0+1)*(j1-j0+1);
+  if(n<=0)return 0;var d=V/n/s.ca;for(var j=j0;j<=j1;j++)for(var i=i0;i<=i1;i++)s.h[j*s.nx+i]+=d;s.mark(i0,j0,i1,j1);return V};
+/* 상자 안에서 y 위쪽 흙의 부피 */
+HF.prototype.above=function(x0,x1,z0,z1,y){var s=this,i0=Math.max(0,Math.ceil((x0-s.x0)/s.dx)),i1=Math.min(s.nx-1,Math.floor((x1-s.x0)/s.dx)),j0=Math.max(0,Math.ceil((z0-s.z0)/s.dz)),j1=Math.min(s.nz-1,Math.floor((z1-s.z0)/s.dz)),V=0;
+  for(var j=j0;j<=j1;j++)for(var i=i0;i<=i1;i++){var e=s.h[j*s.nx+i]-y;if(e>0)V+=e}return V*s.ca};
 HF.prototype.ij=function(x,z){return [Math.round((x-this.x0)/this.dx),Math.round((z-this.z0)/this.dz)]};
 HF.prototype.update=function(force){var s=this,d=s.dirty;if(!d&&!force)return;if(!d)d=[0,0,s.nx-1,s.nz-1];
   var P=s.geo.attributes.position.array,Cc=s.geo.attributes.color.array,c=new T.Color();

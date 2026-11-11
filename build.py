@@ -8,7 +8,7 @@ for k,fn in [('LOWER','lower2.js'),('UPPER','upper.js'),('WORK','work2.js')]:
 f=f.replace("api.lampMat=lampMat;","lampMat.userData.lamp=true;api.lampMat=lampMat;")
 t=r('tpl.html')
 parts={'UTIL':r('util.js'),'HXD':r('hxd.js'),'FACTORY':f}
-for k in ['CORE','TRUCK','WORLD','CRANE','EXCAV','TRAFFIC','MAIN']:
+for k in ['CORE','TRUCK','FLEET','WORLD','CRANE','EXCAV','TRAFFIC','SITE2','MAIN']:
     parts[k]=r(k.lower()+'.js')
 for k,v in parts.items():
     t=t.replace('/*@@%s@@*/'%k,v)

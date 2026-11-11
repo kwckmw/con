@@ -22,10 +22,14 @@
 .grp{display:flex;gap:4px}
 #alerts{position:relative}#alerts b{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;margin-left:4px}
 #alertBox{position:absolute;right:0;top:36px;width:290px;padding:10px;display:none;font-size:12px;max-height:50vh;overflow:auto}#alertBox.open{display:block}#alertBox p{margin:0 0 6px}
-#kpi{position:fixed;left:12px;top:72px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:310px;z-index:4}
+#fleet{position:fixed;left:12px;right:12px;top:66px;display:flex;gap:6px;padding:6px 8px;z-index:5;overflow-x:auto;scrollbar-width:none}#fleet::-webkit-scrollbar{display:none}
+.fl{display:flex;align-items:center;gap:4px;padding:3px 4px 3px 7px;border-radius:11px;background:rgba(255,255,255,.5);white-space:nowrap;flex:none;font-size:11.5px}.night .fl{background:rgba(255,255,255,.07)}
+.fl svg{width:30px;height:18px;fill:currentColor;flex:none;opacity:.85}.fl b{font:700 14px var(--mono);min-width:16px;text-align:center}
+.fl button{width:26px;height:26px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#24222b;font:700 16px/1 var(--sans);cursor:pointer;padding:0}.fl button:disabled{opacity:.3;cursor:default}.night .fl button{background:rgba(255,255,255,.85)}
+#kpi{position:fixed;left:12px;top:122px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:310px;z-index:4}
 .k{padding:9px 12px}.k .l{font-size:11.5px;color:var(--mut)}.k .v{font:700 19px/1.2 var(--mono);margin-top:2px;white-space:nowrap}.k .v small{font-size:11px;font-weight:500;color:var(--mut)}
 .k .bar{height:5px;border-radius:3px;background:rgba(0,0,0,.08);margin-top:6px;overflow:hidden}.k .bar i{display:block;height:100%;background:var(--acc);width:0}
-#panel{position:fixed;right:12px;top:72px;width:310px;padding:14px;z-index:4;max-height:calc(100vh - 200px);overflow:auto}
+#panel{position:fixed;right:12px;top:122px;width:310px;padding:14px;z-index:4;max-height:calc(100vh - 250px);overflow:auto}
 #panel h2{margin:0 0 2px;font-size:16px}#panel .st{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;background:rgba(240,138,28,.15);color:#b55f06;margin:4px 0 8px}
 .night #panel .st{color:#ffb35c}
 #panel dl{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin:8px 0 0}#panel dt{font-size:11px;color:var(--mut)}#panel dd{margin:0;font:600 14px var(--mono)}
@@ -35,19 +39,19 @@
 #panel .act button{font:600 12.5px var(--sans);padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:#fff;cursor:pointer}
 #panel .act button.ghost{background:transparent;color:inherit}
 #diag{width:100%;height:110px;display:block;margin-top:8px;border-radius:10px;background:rgba(255,255,255,.45)}.night #diag{background:rgba(255,255,255,.05)}
-#tracker{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:min(800px,calc(100vw - 24px));padding:10px 12px;z-index:4}
-#tracker .cols{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+#tracker{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:min(940px,calc(100vw - 24px));padding:10px 12px;z-index:4}
+#tracker .cols{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}#tracker .col{max-height:92px;overflow:auto}
 #tracker .col{min-height:54px;border-radius:10px;background:rgba(255,255,255,.45);padding:6px}.night #tracker .col{background:rgba(255,255,255,.05)}
 #tracker .col h3{margin:0 0 4px;font-size:11px;color:var(--mut);font-weight:600}
-.tk{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 6px;border-radius:8px;background:#fff;margin-top:3px;cursor:pointer;border:1px solid var(--line)}
-.night .tk{background:rgba(255,255,255,.1)}.tk i{width:8px;height:8px;border-radius:50%;flex:none}.tk span{font:500 11px var(--mono);color:var(--mut);margin-left:auto;white-space:nowrap}
+.tk{white-space:nowrap;overflow:hidden;display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 6px;border-radius:8px;background:#fff;margin-top:3px;cursor:pointer;border:1px solid var(--line)}
+.night .tk{background:rgba(255,255,255,.1)}.tk i{width:8px;height:8px;border-radius:50%;flex:none}.tk span{font:500 11px var(--mono);color:var(--mut);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #tracker .foot{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12px}
 #depth{flex:1;height:7px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}#depth i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9a26b,#8b6a44)}
 #label{position:fixed;pointer-events:none;z-index:7;padding:4px 9px;border-radius:9px;font-size:12px;font-weight:600;transform:translate(-50%,-140%);display:none;white-space:nowrap}
-#hint{position:fixed;left:12px;top:250px;font-size:12px;color:var(--mut);z-index:3}
+#hint{position:fixed;left:12px;top:300px;font-size:12px;color:var(--mut);z-index:3}
 /* 직접 운전 */
 #drive{position:fixed;inset:0;pointer-events:none;z-index:8;display:none}#drive.on{display:block}
-#drive .hud{position:absolute;left:50%;top:72px;transform:translateX(-50%);padding:8px 14px;pointer-events:auto;display:flex;gap:10px;align-items:center;font-size:12.5px;white-space:nowrap}
+#drive .hud{position:absolute;left:50%;top:122px;transform:translateX(-50%);padding:8px 14px;pointer-events:auto;display:flex;gap:10px;align-items:center;font-size:12.5px;white-space:nowrap}
 #drive .hud b{font-family:var(--mono)}
 #drive .hud button{font:600 12px var(--sans);padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--ink);color:#fff;cursor:pointer}
 #drive .hud button.ghost{background:transparent;color:inherit}
@@ -61,16 +65,17 @@
 #keys{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);padding:8px 12px;font-size:11.5px;color:var(--mut);pointer-events:none;text-align:center}
 body.driving #panel{max-height:calc(100vh - 480px)}
 body.touring #panel{display:none}
-#tourTag{position:fixed;left:50%;top:72px;transform:translateX(-50%);padding:7px 14px;z-index:7;display:none;font-size:13px;font-weight:600}
+#tourTag{position:fixed;left:50%;top:122px;transform:translateX(-50%);padding:7px 14px;z-index:7;display:none;font-size:13px;font-weight:600}
 @media (max-width:900px){
   #weather,#search,#site,#hint{display:none}#top{left:8px;right:8px;top:8px;padding:6px 8px;gap:5px;overflow-x:auto}#top .logo span{display:none}#top .logo{font-size:14px}#top .logo i{width:18px;height:18px}
   .pill{padding:4px 7px;font-size:11px}#clock{font-size:12px}
-  #kpi{top:56px;left:8px;right:8px;width:auto;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.k{padding:6px 8px}.k .v{font-size:13.5px}.k .l{font-size:10px}.k .v small{display:none}.k .bar{display:none}
+  #fleet{top:52px;left:8px;right:8px;padding:5px 6px;gap:5px}.fl span{display:none}.fl{padding:2px 4px 2px 6px}.fl button{width:30px;height:30px}
+  #kpi{top:102px;left:8px;right:8px;width:auto;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.k{padding:6px 8px}.k .v{font-size:13.5px}.k .l{font-size:10px}.k .v small{display:none}.k .bar{display:none}
   #panel{top:auto;bottom:128px;left:8px;right:8px;width:auto;max-height:38vh}#panel.empty{display:none}#diag{height:80px}
   #tracker{bottom:8px;width:calc(100vw - 16px);padding:8px}#tracker .col{min-height:30px;padding:4px}#tracker .col h3{font-size:10px}.tk{font-size:11px;padding:2px 4px}.tk span{display:none}
   .stick{bottom:64px;width:116px;height:116px}.stick.l{left:16px}.stick.r{right:16px}.stick em{font-size:10px}.stick .lf,.stick .rt{display:none}.stick .cap{display:block;bottom:-34px;left:50%;transform:translateX(-50%)}#keys{display:none}
-  #drive .hud{top:56px;left:8px;right:8px;transform:none;flex-wrap:wrap;white-space:normal;font-size:11.5px;gap:6px;padding:8px}#drive .hud button{padding:5px 8px;font-size:11px}
-  body.driving #kpi{display:none}
+  #drive .hud{top:102px;left:8px;right:8px;transform:none;flex-wrap:wrap;white-space:normal;font-size:11.5px;gap:6px;padding:8px}#drive .hud button{padding:5px 8px;font-size:11px}
+  body.driving #kpi{display:none}body.touring #kpi{display:none}
   body.driving #panel,body.driving #tracker{display:none}
 }
 </style>
@@ -79,7 +84,7 @@ body.touring #panel{display:none}
 <canvas id="gl" tabindex="0" aria-label="공사현장 3D 화면. 드래그로 회전, 휠이나 두 손가락으로 확대, 장비를 누르면 정보가 나옵니다."></canvas>
 <header id="top" class="card">
   <div class="logo"><i></i>Groundline<span style="font-weight:500;color:var(--mut);font-size:12px;margin-left:4px">토공 관제</span></div>
-  <input id="search" placeholder="장비 검색 (EX-02, DT-05, TC-01)" aria-label="장비 검색">
+  <input id="search" placeholder="장비 검색 (EX-02, DT-05, WL-01)" aria-label="장비 검색">
   <select id="site" aria-label="현장 선택"><option>하늘리버사이드 C블록</option><option disabled>A블록 (준비 중)</option></select>
   <div class="sp"></div>
   <span id="weather" class="pill" style="cursor:default">맑음 18°C</span>
@@ -90,6 +95,7 @@ body.touring #panel{display:none}
   <button class="pill" id="night">야간</button>
   <div id="alerts"><button class="pill" id="alertBtn">알림<b id="alertN">0</b></button><div id="alertBox" class="card"></div></div>
 </header>
+<section id="fleet" class="card" aria-label="장비 대수 조정"></section>
 <section id="kpi">
   <div class="k card"><div class="l">오늘 굴착 (본바닥)</div><div class="v" id="k1">0<small> m³</small></div><div class="bar"><i id="k1b"></i></div></div>
   <div class="k card"><div class="l">반출 (흐트러진 상태)</div><div class="v" id="k2">0<small> m³</small></div></div>
@@ -125,10 +131,12 @@ var simT=7*3600;
 /*@@FACTORY@@*/
 /*@@CORE@@*/
 /*@@TRUCK@@*/
+/*@@FLEET@@*/
 /*@@WORLD@@*/
 /*@@CRANE@@*/
 /*@@EXCAV@@*/
 /*@@TRAFFIC@@*/
+/*@@SITE2@@*/
 /*@@MAIN@@*/
 })();
 </script>
