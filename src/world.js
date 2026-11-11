@@ -1,5 +1,7 @@
 /* ===================== world: 현장 지형 · 길 · 시설 ===================== */
 var PIT={x0:2,x1:30,z0:-6,z1:12};
+/* 동측 확장 구역: 성토장 · 토사 적치장 · 노반 정지 구간 · 관로 굴착 구간 */
+var Z2={PAD:{x0:62,x1:96,z0:-36,z1:0},BOR:{x0:128,x1:150,z0:-36,z1:-4},BED:{x0:62,x1:148,z0:6,z1:18},TRN:{x0:62,x1:148,z0:22,z1:32},X1:160};
 /* 두 운반로 모두 크레인 앞 공용 덤프로(z=3, x -8 ~ -30)를 지난다. 합류 구간은 한 번에 한 운반로만 진입 */
 var LN=new Loop([[28,-9.4],[-8,-9.4],[-8,3],[-30,3],[-30,-32],[28,-32]],6.2);LN.id='N';   /* 북측: EX-01 적재 → 남하 → 덤프로 → 북상 */
 var LS=new Loop([[46,15.4],[-4,15.4],[-4,3],[-30,3],[-30,37],[46,37]],6.2);LS.id='S';     /* 남측: EX-02 적재 → 북상 → 덤프로 → 남하 */
@@ -11,8 +13,10 @@ function strata(c,y,j){var i=0;while(i<STRATA.length-1&&y<STRATA[i+1][0])i++;c.s
 function noise2(x,z){return Math.sin(x*1.7+z*.9)*.5+Math.sin(x*.37-z*1.3)*.35+Math.sin(x*4.1+z*3.7)*.15}
 (function(){
   /* 바깥 땅: 구덩이를 둘러싼 네 조각 (색 얼룩을 넣으려고 잘게 나눔) */
-  var G=[[-120,-100,PIT.x0,100],[PIT.x1,-100,120,100],[PIT.x0,-100,PIT.x1,PIT.z0],[PIT.x0,PIT.z1,PIT.x1,100]];
-  G.forEach(function(r){var w=r[2]-r[0],d=r[3]-r[1],g=new T.PlaneGeometry(w,d,Math.max(1,Math.round(w/2.5)),Math.max(1,Math.round(d/2.5)));g.rotateX(-Math.PI/2);g.translate((r[0]+r[2])/2,0,(r[1]+r[3])/2);
+  /* 높이 격자가 땅 아래로 내려가는 자리(구덩이 · 노반 · 관로)는 바깥 땅에서 오려 낸다 */
+  var G=[[-130,-100,230,100]];[PIT,Z2.BED,Z2.TRN].forEach(function(h){var N=[];G.forEach(function(r){if(h.x0>=r[2]||h.x1<=r[0]||h.z0>=r[3]||h.z1<=r[1]){N.push(r);return}
+    if(h.x0>r[0])N.push([r[0],r[1],h.x0,r[3]]);if(h.x1<r[2])N.push([h.x1,r[1],r[2],r[3]]);var a=Math.max(r[0],h.x0),b=Math.min(r[2],h.x1);if(h.z0>r[1])N.push([a,r[1],b,h.z0]);if(h.z1<r[3])N.push([a,h.z1,b,r[3]])});G=N});
+  G.forEach(function(r){var w=r[2]-r[0],d=r[3]-r[1],g=new T.PlaneGeometry(w,d,Math.max(1,Math.round(w/4)),Math.max(1,Math.round(d/4)));g.rotateX(-Math.PI/2);g.translate((r[0]+r[2])/2,0,(r[1]+r[3])/2);
     var P=g.attributes.position,C=new Float32Array(P.count*3),c=new T.Color();for(var i=0;i<P.count;i++){var x=P.getX(i),z=P.getZ(i);c.setHex(0x9F907A);c.offsetHSL(0,0,noise2(x*.15,z*.15)*.025);C[i*3]=c.r;C[i*3+1]=c.g;C[i*3+2]=c.b}
     g.setAttribute('color',new T.BufferAttribute(C,3));var m=new T.Mesh(g,mat(0xffffff,{vc:true,r:.98}));m.receiveShadow=true;scene.add(m)});
   /* 구덩이 벽: 지층 띠 (위에서 -8 m 까지) */
@@ -52,7 +56,7 @@ YARDP.road=function(x,z){return Math.abs(z-3)<4.2||Math.abs(x+30)<4.2||(Math.abs
 var YARD0=Float32Array.from(YARDP.h);
 /* 펜스 · 정문 */
 (function(){var fence=mat(0xc7ccd6,{r:.5,m:.2,op:.85}),post=mat(0x7d8496,{r:.5,m:.3}),FP=[],fx,fz;
-  for(fx=-50.75;fx<=51;fx+=2.5){FP.push([fx,-40,0]);FP.push([fx,40,0])}for(fz=-38.75;fz<=39;fz+=2.5){if(fz>-31&&fz<-21)continue;FP.push([-52,fz,1]);FP.push([52,fz,1])}
+  for(fx=-50.75;fx<=Z2.X1-1;fx+=2.5){FP.push([fx,-40,0]);FP.push([fx,40,0])}for(fz=-38.75;fz<=39;fz+=2.5){FP.push([Z2.X1,fz,1]);if(fz>-31&&fz<-21)continue;FP.push([-52,fz,1])}
   var fim=new T.InstancedMesh(new T.BoxGeometry(2.45,2.0,.04),fence,FP.length),pim=new T.InstancedMesh(new T.CylinderGeometry(.05,.05,2.1,6),post,FP.length),bim=new T.InstancedMesh(new T.BoxGeometry(.5,.18,.32),mat(0xe8e4dc),FP.length),d=new T.Object3D();
   FP.forEach(function(p,i){d.position.set(p[0],1.12,p[1]);d.rotation.set(0,p[2]?Math.PI/2:0,0);d.updateMatrix();fim.setMatrixAt(i,d.matrix);d.position.set(p[0]+(p[2]?0:1.25),1.05,p[1]+(p[2]?1.25:0));d.updateMatrix();pim.setMatrixAt(i,d.matrix);d.position.y=.09;d.updateMatrix();bim.setMatrixAt(i,d.matrix)});
   scene.add(fim,pim,bim);
@@ -69,17 +73,17 @@ var YARD0=Float32Array.from(YARDP.h);
   for(var s=0;s<9;s++)box(1.0,.08,.3,mat(0x7d8496),-52.4+1.0,.29*s+.15,29.2-s*.3+1.2)})();
 /* 조명탑 (밤에 켜짐) */
 var TOWERS=[],towerMat=new T.MeshStandardMaterial({color:0xfff4cf,emissive:0xffe39a,emissiveIntensity:0});towerMat.userData.lamp=true;
-[[-3,-16,8,-2],[38,0,24,4],[16,-20,4,-8],[16,26,22,10]].forEach(function(p){var g=new T.Group();g.position.set(p[0],0,p[1]);g.rotation.y=Math.atan2(-(p[3]-p[1]),p[2]-p[0]);scene.add(g);
+[[-3,-16,8,-2],[38,0,24,4],[16,-20,4,-8],[16,26,22,10],[112,2,104,-14],[104,20,112,26]].forEach(function(p){var g=new T.Group();g.position.set(p[0],0,p[1]);g.rotation.y=Math.atan2(-(p[3]-p[1]),p[2]-p[0]);scene.add(g);
   rbx(2.4,1.1,1.4,.08,mat(0xf0a41f,{r:.6}),0,.85,0,g);[-.8,.8].forEach(function(x){sh(cz(.28,.2,TM.TIRE,x,.28,.7),g);sh(cz(.28,.2,TM.TIRE,x,.28,-.7),g)});
   sh(cy(.1,8.6,mat(0xb8bcc4,{m:.4}),0,5.6,0,10),g);box(.2,.2,2.2,mat(0x7d8496),0,9.8,0,g);
   [-.8,-.27,.27,.8].forEach(function(z){var h=sh(rb(.35,.45,.48,.05,mat(0x3b3e42),.1,9.55,z),g);h.rotation.z=-.5;box(.04,.38,.4,towerMat,.3,9.45,z,g).rotation.z=-.5});
   var L=new T.SpotLight(0xffe6b0,0,90,Math.PI/3.6,.55,1.2);L.position.set(p[0],10,p[1]);L.target.position.set(p[2],0,p[3]);scene.add(L,L.target);TOWERS.push(L)});
 /* 나무 · 바깥 도로 · 차 */
-(function(){var TR=[];for(var t=0;t<80;t++){var a=t/80*Math.PI*2;TR.push([Math.cos(a)*68+Math.sin(t*7.1)*4,Math.sin(a)*56+Math.cos(t*3.3)*4])}
+(function(){var TR=[];for(var t=0;t<120;t++){var a=t/120*Math.PI*2;TR.push([54+Math.cos(a)*124+Math.sin(t*7.1)*4,Math.sin(a)*58+Math.cos(t*3.3)*4])}
   var crown=new T.InstancedMesh(new T.IcosahedronGeometry(2,1),mat(0xa9c493,{r:.95}),TR.length),trunk=new T.InstancedMesh(new T.CylinderGeometry(.2,.26,1.8,6),mat(0x9a7d61),TR.length),d=new T.Object3D();
   TR.forEach(function(p,i){var s=.8+((i*37)%10)/20;d.position.set(p[0],2.6*s,p[1]);d.rotation.set(0,i,0);d.scale.set(s,s*1.15,s);d.updateMatrix();crown.setMatrixAt(i,d.matrix);d.position.y=.9;d.scale.set(s,s,s);d.updateMatrix();trunk.setMatrixAt(i,d.matrix)});
   crown.castShadow=true;scene.add(crown,trunk);
-  box(11,.03,220,mat(0xcbc6bf),-60,.012,0);box(240,.03,11,mat(0xcbc6bf),0,.012,48);
+  box(11,.03,220,mat(0xcbc6bf),-60,.012,0);box(360,.03,11,mat(0xcbc6bf),60,.012,48);
   for(var k=-100;k<100;k+=6)box(.15,.035,2.5,mat(0xf6f4ef),-60,.02,k)})();
 var cars=[];for(var ci=0;ci<6;ci++){var cg=new T.Group(),cc=mat([0xf6f4ef,0x3d5bd9,0xe0573a,0x2e3135][ci%4],{r:.45,m:.2});rbx(1.85,.7,4.3,.15,cc,0,.6,0,cg);rbx(1.65,.6,2.3,.2,M(0x34444f,{r:.1,op:.75}),0,1.2,-.25,cg);
   [[-.8,1.4],[.8,1.4],[-.8,-1.4],[.8,-1.4]].forEach(function(w){sh(cx(.32,.22,TM.TIRE,w[0],.32,w[1]),cg)});scene.add(cg);cars.push({g:cg,s:ci*37,lane:ci%2})}
