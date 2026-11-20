@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Ulsan walk · 울산 3D 여행 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F6EFE4;--paper:#FFFAF2;--line:#E2D3BE;--ink:#3A2A20;--muted:#7A6552;--red:#A8372A;--teal:#2F6E6A;--gold:#D9A441}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:760px;margin:0 auto;padding:12px 14px 20px}
+header{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.ham{width:36px;height:36px;border:1px solid #D9C7AE;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent}
+.ham span{display:block;width:14px;height:1.5px;background:var(--ink);box-shadow:0 -4px 0 var(--ink),0 4px 0 var(--ink)}
+.logo{font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:var(--red)}
+.crumb{color:var(--muted);font-size:14px}
+.hero{display:flex;gap:14px;align-items:flex-start;margin:14px 0 10px}
+.stamp{flex:0 0 auto;border:1.5px solid #C98A6A;border-radius:12px 12px 6px 6px;padding:4px 10px 6px;text-align:center;background:#F3E2CF;transform:rotate(-3deg);min-width:66px}
+.stamp small{display:block;font-size:11px;color:var(--red);letter-spacing:1.5px}
+.stamp b{display:block;font-family:'Gowun Batang',serif;font-size:32px;color:var(--red);line-height:1.1}
+.meta{min-width:0;flex:1}
+.kicker{font-size:12px;color:var(--red);letter-spacing:1px;font-weight:700}
+.title{font-family:'Gowun Batang',serif;font-size:26px;font-weight:700;line-height:1.25;margin:2px 0}
+.desc{font-size:14px;color:var(--muted);line-height:1.55}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:4px 0 8px}
+.pager button{width:38px;height:38px;border-radius:50%;border:1px solid #D9C7AE;background:var(--paper);color:var(--ink);font-size:16px;cursor:pointer}
+.pager span{font-family:'Gowun Batang',serif;font-size:18px}
+.pager span i{font-style:normal;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:7px 13px;border-radius:999px;border:1px solid #D9C7AE;background:var(--paper);font-size:13px;color:#6B4A36;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--red);border-color:var(--red);color:#FFF5EA}
+.mapbox{position:relative;border:1px solid #D9C7AE;border-radius:12px;overflow:hidden;height:62vh;min-height:420px;background:#EFE4D3}
+.mapbox .band{position:absolute;top:0;left:0;right:0;height:8px;z-index:3;background:repeating-linear-gradient(90deg,var(--red) 0 10px,var(--teal) 10px 20px,var(--gold) 20px 30px)}
+#map{position:absolute;inset:0}
+.coord{position:absolute;left:10px;top:18px;z-index:3;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:center;max-width:65%}
+.coord .pin{width:18px;height:18px;border:2px solid var(--red);border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex:0 0 auto}
+.coord b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coord small{font-size:12px;color:var(--muted)}
+.zoom{position:absolute;right:10px;top:18px;z-index:3;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.zoom button{width:40px;height:40px;border:0;border-bottom:1px solid var(--line);background:transparent;font-size:20px;color:var(--ink);cursor:pointer}
+.zoom button:last-child{border-bottom:0;font-size:14px}
+.tools{position:absolute;left:10px;right:10px;bottom:12px;z-index:3;display:flex;gap:6px}
+.tools button{flex:1;padding:10px 4px;border-radius:10px;border:1px solid #D9C7AE;background:var(--paper);font-size:13px;color:var(--ink);font-family:inherit;cursor:pointer}
+.tools button.on{background:var(--teal);border-color:var(--teal);color:#F1FAF7}
+.sheet{margin-top:10px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.sheet .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheet h3{margin:0;font-size:16px}
+.badge{font-size:11px;padding:3px 9px;border-radius:999px;background:#F3DCD3;color:#7A2418;flex:0 0 auto}
+.sheet p{margin:6px 0 0;font-size:13.5px;color:var(--muted);line-height:1.55}
+.sheet .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.sheet .facts div{background:#F6EEE2;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.sheet .facts b{display:block;color:var(--ink);font-size:15px;margin-top:2px}
+.sheet a{display:inline-block;margin-top:10px;font-size:13px;color:var(--red);text-decoration:none;border-bottom:1px solid currentColor}
+.mk{cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.mk .dot{width:26px;height:26px;border-radius:50%;border:2px solid #FFF5EA;color:#FFF5EA;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.mk .lbl{display:none;margin-bottom:4px;background:var(--red);color:#FFF5EA;padding:6px 10px;border-radius:6px;font-size:13px;white-space:nowrap;align-items:center;gap:6px}
+.mk .lbl i{font-style:normal;background:#FFF5EA;color:var(--red);border-radius:3px;padding:0 5px;font-weight:700}
+.mk.sel .lbl{display:flex}
+.mk.sel{z-index:5}
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--muted);font-size:14px;z-index:4;background:#EFE4D3}
+.foot{font-size:11px;color:#9C8468;margin-top:10px;line-height:1.5}
+.maplibregl-ctrl-attrib{font-size:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="ham"><span></span></div><span class="logo">Ulsan walk</span><span class="crumb">/ 울산 여행 지도</span></header>
+
+<section class="hero">
+  <div class="stamp"><small>ULSAN</small><b id="stampNum">10</b><small id="stampSub">SPOTS</small></div>
+  <div class="meta">
+    <div class="kicker" id="kicker">전체 보기</div>
+    <div class="title" id="title">울산광역시</div>
+    <div class="desc" id="desc">산과 강, 바다를 함께 품은 도시. 번호를 누르면 그곳으로 날아가요.</div>
+  </div>
+</section>
+<div class="pager"><button id="prev" aria-label="이전 장소">‹</button><span id="pageTxt">— <i>/ 10</i></span><button id="next" aria-label="다음 장소">›</button></div>
+
+<div class="chips" id="chips">
+  <button class="chip on" data-c="all">전체</button>
+  <button class="chip" data-c="tour">10대 관광지</button>
+  <button class="chip" data-c="cafe">유명 카페</button>
+  <button class="chip" data-c="food">맛집</button>
+  <button class="chip" data-c="night">야경</button>
+</div>
+
+<div class="mapbox">
+  <div class="band"></div>
+  <div id="map"></div>
+  <div class="coord"><div class="pin"></div><div style="min-width:0"><b id="cName">울산광역시 전체</b><small id="cCoord">35.54° N · 129.31° E</small></div></div>
+  <div class="zoom"><button id="zin" aria-label="확대">+</button><button id="zout" aria-label="축소">−</button><button id="north" aria-label="북쪽 정렬">N</button></div>
+  <div class="tools"><button id="tRoute">오늘 동선</button><button id="t3d" class="on">3D</button><button id="tSpin">둘러보기</button><button id="tHome">울산 전체</button></div>
+  <div class="err" id="err">지도를 불러오지 못했어요.<br>인터넷 연결을 확인한 뒤 새로고침해 주세요.</div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="row"><h3 id="sTitle">울산 10대 관광지</h3><span class="badge" id="sBadge">안내</span></div>
+  <p id="sText">지도 위 번호를 누르면 장소 정보가, 확대해서 건물을 누르면 건물 이름·주소·높이가 여기에 나와요.</p>
+  <div class="facts" id="sFacts" style="display:none"></div>
+  <a id="sLink" href="#" target="_blank" rel="noopener" style="display:none">네이버 지도에서 보기</a>
+</div>
+<div class="foot">지도 © OpenStreetMap 기여자 · OpenFreeMap · 건물 정보는 OpenStreetMap 기준이라 이름이 없는 건물도 있어요. 카페·맛집 위치는 대략적인 위치이니 방문 전 지도 앱으로 확인하세요.</div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const CAT = {tour:{n:'10대 관광지',c:'#A8372A'},cafe:{n:'유명 카페',c:'#2F6E6A'},food:{n:'맛집',c:'#C77B2E'},night:{n:'야경',c:'#3C3489'}};
+const PLACES = [
+ {n:'태화강 국가정원',c:'tour',lat:35.5487,lng:129.2985,d:'국내 제2호 국가정원. 태화강 양쪽 4.3km 십리대숲과 계절 꽃밭을 걸어요. (울산 12경 1경)'},
+ {n:'대왕암공원',c:'tour',lat:35.4924,lng:129.4429,d:'해송 숲길 끝에 바다로 뻗은 기암과 출렁다리. 문무대왕비 전설이 전해져요. (2경)'},
+ {n:'가지산',c:'tour',lat:35.6097,lng:129.0030,d:'영남알프스 최고봉(1,241m). 철마다 풍경이 달라 사계로 꼽혀요. (3경)'},
+ {n:'간월재·신불산 억새평원',c:'tour',lat:35.5545,lng:129.0420,d:'가을이면 능선이 은빛 억새로 덮이는 영남알프스의 대표 풍경.'},
+ {n:'반구천 암각화',c:'tour',lat:35.6168,lng:129.1880,d:'선사시대 고래 사냥 그림이 새겨진 바위. 2025년 유네스코 세계유산.'},
+ {n:'간절곶',c:'tour',lat:35.3594,lng:129.3613,d:'한반도 육지에서 해가 가장 일찍 뜨는 곳. 소망우체통이 명물이에요.'},
+ {n:'주전 몽돌해변',c:'tour',lat:35.5390,lng:129.4660,d:'검은 몽돌이 깔린 해변. 파도에 자갈 구르는 소리가 매력이에요. (7경)'},
+ {n:'울산대공원',c:'tour',lat:35.5270,lng:129.2830,d:'도심 속 대형 공원. 장미원·동물원·산책로가 있어요.'},
+ {n:'장생포 고래문화마을',c:'tour',lat:35.5000,lng:129.3870,d:'국내 유일 고래문화특구. 고래박물관과 옛 포경마을을 재현했어요. (10경)'},
+ {n:'외고산 옹기마을',c:'tour',lat:35.4377,lng:129.2706,d:'전국 최대 규모의 옹기마을. 옹기 만들기 체험을 할 수 있어요. (11경)'},
+ {n:'울산대교 전망대',c:'night',lat:35.5047,lng:129.4010,d:'울산항과 울산대교, 공단 불빛이 한눈에 보이는 야경 명소.'},
+ {n:'태화강 십리대숲 은하수길',c:'night',lat:35.5500,lng:129.3010,d:'밤이면 대숲 산책로에 은은한 조명이 켜져요.'},
+ {n:'파툼 커피바',c:'cafe',lat:35.5512,lng:129.3005,d:'태화강 국가정원 바로 앞 커피바. 정원 산책 뒤 들르기 좋아요.',a:'중구 태화강국가정원길 189'},
+ {n:'라메르 판지',c:'cafe',lat:35.6330,lng:129.4470,d:'바다 바로 앞 대형 베이커리 카페. 주차 공간이 넉넉해요.',a:'북구 판지1길 30'},
+ {n:'인얼스 커피',c:'cafe',lat:35.4975,lng:129.4300,d:'일산해수욕장 근처 오션뷰 카페. 핸드드립 커피 평이 좋아요.',a:'동구 해수욕장7길 5'},
+ {n:'옐로우스톤 비치클럽',c:'cafe',lat:35.4925,lng:129.4445,d:'대왕암공원 옆 브런치 카페.',a:'동구 성끝4길 10-1'},
+ {n:'호피폴라 간절곶',c:'cafe',lat:35.3800,lng:129.3530,d:'통유리 파노라마 오션뷰, 24시간 운영 카페.',a:'울주군 서생면 나사해안길 6'},
+ {n:'공차 울산간절곶점',c:'cafe',lat:35.3605,lng:129.3575,d:'루프탑에서 간절곶이 내려다보이는 3층 대형 매장.',a:'울주군 서생면 간절곶1길 25-6'},
+ {n:'온실리움',c:'cafe',lat:35.5930,lng:129.1000,d:'울산 1호 민간정원. 온실 식물원 콘셉트의 카페.',a:'울주군 상북면 도동신리로 138'},
+ {n:'언양 기와집 불고기',c:'food',lat:35.5655,lng:129.1270,d:'옛 기와집을 고친, 오래된 언양불고기 집. 석쇠 직화 불고기.',a:'울주군 언양읍 헌양길 86'},
+ {n:'금화불고기',c:'food',lat:35.5640,lng:129.1250,d:'언양 불고기 거리의 대표 노포 중 한 곳.',a:'울주군 언양읍'},
+ {n:'미미정 횟집 (고래고기)',c:'food',lat:35.5030,lng:129.3850,d:'장생포 고래고기 전문점. 호불호가 갈리니 소량부터.',a:'남구 장생포고래로 221'},
+ {n:'사발생국수',c:'food',lat:35.5760,lng:129.3330,d:'멸치국수 전문점. 가성비가 좋아요.',a:'중구 약사동'}
+];
+const ROUTE = ['태화강 국가정원','울산대공원','장생포 고래문화마을','울산대교 전망대','대왕암공원','주전 몽돌해변'];
+const ULSAN_BOUNDS = [[128.95,35.32],[129.48,35.73]];
+const $ = id => document.getElementById(id);
+
+let cur='all', selIdx=-1, spinning=false, is3D=true, routeOn=false;
+const markers=[];
+
+const map = new maplibregl.Map({
+  container:'map',
+  style:'https://tiles.openfreemap.org/styles/liberty',
+  bounds:ULSAN_BOUNDS, fitBoundsOptions:{padding:{top:70,bottom:70,left:20,right:60}},
+  pitch:25, bearing:0, maxPitch:75, attributionControl:{compact:true},
+  localIdeographFontFamily:"'Noto Sans KR', sans-serif"
+});
+map.on('error', e => { if(!map.loaded() && e && e.error && /Failed to fetch|NetworkError/i.test(String(e.error.message))) $('err').style.display='flex'; });
+
+function tint(){
+  const st = map.getStyle();
+  st.layers.forEach(l=>{
+    const id=l.id;
+    try{
+      if(l.type==='background') map.setPaintProperty(id,'background-color','#F3EADB');
+      else if(l.type==='fill' && /water/.test(id)) map.setPaintProperty(id,'fill-color','#BFD9D3');
+      else if(l.type==='fill' && /(park|wood|forest|grass|landcover|landuse_park)/.test(id)) { map.setPaintProperty(id,'fill-color','#DCE3C5'); }
+      else if(l.type==='fill' && /landuse/.test(id)) map.setPaintProperty(id,'fill-color','#EEE2CF');
+      else if(l.type==='line' && /waterway/.test(id)) map.setPaintProperty(id,'line-color','#A9CCC5');
+      else if(l.type==='fill' && /^building$/.test(id)) map.setPaintProperty(id,'fill-color','#E2B49A');
+      else if(l.type==='fill-extrusion'){
+        map.setPaintProperty(id,'fill-extrusion-color',['interpolate',['linear'],['coalesce',['get','render_height'],5],0,'#E3AE90',30,'#D08A6A',100,'#B8664A']);
+        map.setPaintProperty(id,'fill-extrusion-opacity',0.95);
+      }
+      else if(l.type==='line' && /boundary/.test(id)) map.setPaintProperty(id,'line-color','#C9B392');
+      if(l.type==='symbol' && l.layout && l.layout['text-field']) {
+        map.setLayoutProperty(id,'text-field',['coalesce',['get','name:ko'],['get','name'],['get','name:latin']]);
+      }
+    }catch(e){}
+  });
+}
+
+map.on('load', ()=>{
+  $('err').style.display='none';
+  tint();
+  map.addControl(new maplibregl.ScaleControl({maxWidth:80}),'bottom-left');
+  // selected building highlight
+  map.addSource('sel',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'sel-bld',type:'fill-extrusion',source:'sel',paint:{'fill-extrusion-color':'#A8372A','fill-extrusion-height':['get','h'],'fill-extrusion-base':['get','b'],'fill-extrusion-opacity':0.95}});
+  // route
+  const coords = ROUTE.map(n=>{const p=PLACES.find(x=>x.n===n);return [p.lng,p.lat]});
+  map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
+  map.addLayer({id:'route',type:'line',source:'route',layout:{visibility:'none','line-cap':'round'},paint:{'line-color':'#A8372A','line-width':3,'line-dasharray':[2,1.5]}});
+  loadBoundary();
+  const bLayer = extrusionLayer();
+  if(bLayer){
+    map.on('click', bLayer, onBuilding);
+    map.on('mouseenter', bLayer, ()=>map.getCanvas().style.cursor='pointer');
+    map.on('mouseleave', bLayer, ()=>map.getCanvas().style.cursor='');
+  }
+});
+
+function extrusionLayer(){ const l = map.getStyle().layers.find(l=>l.type==='fill-extrusion'); return l && l.id; }
+
+async function loadBoundary(){
+  try{
+    const r = await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent('울산광역시')+'&countrycodes=kr&polygon_geojson=1&polygon_threshold=0.0005&format=json&limit=1');
+    const j = await r.json();
+    if(!j[0] || !j[0].geojson) return;
+    map.addSource('ulsan',{type:'geojson',data:{type:'Feature',geometry:j[0].geojson}});
+    map.addLayer({id:'ulsan-fill',type:'fill',source:'ulsan',paint:{'fill-color':'#A8372A','fill-opacity':['interpolate',['linear'],['zoom'],9,0.05,13,0]}}, firstSymbol());
+    map.addLayer({id:'ulsan-line',type:'line',source:'ulsan',paint:{'line-color':'#A8372A','line-width':2,'line-dasharray':[3,2],'line-opacity':['interpolate',['linear'],['zoom'],9,0.9,14,0.2]}}, firstSymbol());
+  }catch(e){}
+}
+function firstSymbol(){ const l=map.getStyle().layers.find(l=>l.type==='symbol'); return l && l.id; }
+
+function buildMarkers(){
+  PLACES.forEach((p,i)=>{
+    const el=document.createElement('div'); el.className='mk';
+    const num = numberOf(i);
+    el.innerHTML=`<div class="lbl"><i>${num}</i>${p.n}</div><div class="dot" style="background:${CAT[p.c].c}">${num}</div>`;
+    el.addEventListener('click',ev=>{ev.stopPropagation();pick(i)});
+    const m=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([p.lng,p.lat]).addTo(map);
+    markers.push({m,el,p});
+  });
+}
+function listOf(c){ return PLACES.map((p,i)=>i).filter(i=>c==='all'?PLACES[i].c==='tour':PLACES[i].c===c); }
+function numberOf(i){ const l=PLACES.filter(p=>p.c===PLACES[i].c); return l.indexOf(PLACES[i])+1; }
+
+function applyFilter(){
+  markers.forEach(({el,p})=>{ el.style.display=(cur==='all'||p.c===cur)?'':'none'; });
+  const n = cur==='all' ? PLACES.filter(p=>p.c==='tour').length : PLACES.filter(p=>p.c===cur).length;
+  $('pageTxt').innerHTML=`— <i>/ ${n}</i>`;
+}
+
+function fmt(lat,lng){ return `${lat.toFixed(4)}° N · ${lng.toFixed(4)}° E`; }
+
+function pick(i){
+  stopSpin();
+  selIdx=i; const p=PLACES[i];
+  markers.forEach((o,k)=>o.el.classList.toggle('sel',k===i));
+  const lst = PLACES.filter(x=>x.c===p.c), k=lst.indexOf(p)+1;
+  $('stampNum').textContent=String(k).padStart(2,'0'); $('stampSub').textContent='/ '+lst.length;
+  $('kicker').textContent=CAT[p.c].n; $('title').textContent=p.n; $('desc').textContent=p.d;
+  $('pageTxt').innerHTML=`${String(k).padStart(2,'0')} <i>/ ${lst.length}</i>`;
+  $('cName').textContent=p.n; $('cCoord').textContent=fmt(p.lat,p.lng);
+  $('sTitle').textContent=p.n; $('sBadge').textContent=CAT[p.c].n; $('sText').textContent=p.d;
+  $('sFacts').style.display='grid';
+  $('sFacts').innerHTML=`<div>위치<b>${p.a||'울산광역시'}</b></div><div>좌표<b style="font-size:13px">${p.lat.toFixed(3)}, ${p.lng.toFixed(3)}</b></div>`;
+  $('sLink').style.display='inline-block'; $('sLink').href='https://map.naver.com/p/search/'+encodeURIComponent('울산 '+p.n.replace(/\s*\(.*\)/,''));
+  map.getSource('sel') && map.getSource('sel').setData({type:'FeatureCollection',features:[]});
+  const far = p.lng<129.1;
+  map.flyTo({center:[p.lng,p.lat],zoom:far?13.5:16.4,pitch:is3D?60:0,bearing:-20,speed:1.2,curve:1.4,essential:true});
+}
+
+async function onBuilding(e){
+  const f=e.features && e.features[0]; if(!f) return;
+  stopSpin();
+  const h=Math.round(f.properties.render_height||0), b=Math.round(f.properties.render_min_height||0);
+  map.getSource('sel').setData({type:'Feature',geometry:f.geometry,properties:{h:Math.max(h,3)+0.3,b}});
+  const {lat,lng}=e.lngLat;
+  $('cName').textContent='선택한 건물'; $('cCoord').textContent=fmt(lat,lng);
+  $('sTitle').textContent='건물 정보 불러오는 중…'; $('sBadge').textContent='건물';
+  $('sText').textContent='OpenStreetMap에서 이 위치의 건물 정보를 찾고 있어요.';
+  const floors = h? Math.max(1,Math.round(h/3.2)) : null;
+  $('sFacts').style.display='grid';
+  $('sFacts').innerHTML=`<div>높이<b>${h? h+' m':'정보 없음'}</b></div><div>추정 층수<b>${floors? '약 '+floors+'층':'—'}</b></div>`;
+  $('sLink').style.display='none';
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=ko`);
+    const j=await r.json();
+    const ad=j.address||{};
+    const name=j.name || ad.building || ad.amenity || ad.shop || ad.office || ad.tourism || '';
+    const addr=[ad.city||ad.county, ad.borough||ad.city_district, ad.suburb||ad.quarter, ad.road, ad.house_number].filter(Boolean).join(' ');
+    $('sTitle').textContent= name || '이름 없는 건물';
+    $('sText').textContent= addr || (j.display_name||'주소 정보를 찾지 못했어요.');
+    const t = j.type && j.type!=='yes' ? j.type : (j.category||'');
+    $('sFacts').innerHTML+=`<div>분류<b style="font-size:13px">${kind(j.category,j.type)}</b></div><div>지도<b style="font-size:13px">OSM #${j.osm_id||'—'}</b></div>`;
+    $('cName').textContent=name||'선택한 건물';
+    $('sLink').style.display='inline-block';
+    $('sLink').href='https://map.naver.com/p/search/'+encodeURIComponent(name? name : addr);
+  }catch(err){
+    $('sTitle').textContent='선택한 건물';
+    $('sText').textContent='건물 이름을 불러오지 못했어요. 잠시 뒤 다시 눌러보세요.';
+  }
+}
+function kind(c,t){
+  const m={apartments:'아파트',house:'주택',residential:'주거',commercial:'상업',retail:'상가',office:'업무',industrial:'공장',school:'학교',university:'대학교',hospital:'병원',church:'교회',hotel:'호텔',cafe:'카페',restaurant:'음식점',public:'공공',train_station:'역',warehouse:'창고',yes:'건물',mall:'쇼핑몰',department_store:'백화점',museum:'박물관',attraction:'관광지'};
+  return m[t]||m[c]||'건물';
+}
+
+function home(){
+  stopSpin(); selIdx=-1;
+  markers.forEach(o=>o.el.classList.remove('sel'));
+  map.getSource('sel') && map.getSource('sel').setData({type:'FeatureCollection',features:[]});
+  const n = cur==='all'?10:PLACES.filter(p=>p.c===cur).length;
+  $('stampNum').textContent=String(n).padStart(2,'0'); $('stampSub').textContent='SPOTS';
+  $('kicker').textContent=cur==='all'?'전체 보기':CAT[cur].n; $('title').textContent='울산광역시';
+  $('desc').textContent='산과 강, 바다를 함께 품은 도시. 번호를 누르면 그곳으로 날아가요.';
+  $('cName').textContent='울산광역시 전체'; $('cCoord').textContent='35.54° N · 129.31° E';
+  $('sTitle').textContent=cur==='all'?'울산 10대 관광지':CAT[cur].n; $('sBadge').textContent='안내';
+  $('sText').textContent='지도 위 번호를 누르면 장소 정보가, 확대해서 건물을 누르면 건물 이름·주소·높이가 여기에 나와요.';
+  $('sFacts').style.display='none'; $('sLink').style.display='none';
+  applyFilter();
+  map.fitBounds(ULSAN_BOUNDS,{padding:{top:70,bottom:70,left:20,right:60},pitch:25,bearing:0,duration:1400});
+}
+
+function step(d){
+  const lst=listOf(cur); if(!lst.length) return;
+  let k=lst.indexOf(selIdx); k = k<0 ? (d>0?0:lst.length-1) : (k+d+lst.length)%lst.length;
+  pick(lst[k]);
+}
+
+function spin(){ if(!spinning) return; map.rotateTo((map.getBearing()+0.15)%360,{duration:0}); requestAnimationFrame(spin); }
+function stopSpin(){ spinning=false; $('tSpin').classList.remove('on'); }
+
+$('chips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));
+  cur=b.dataset.c; home();
+});
+$('prev').onclick=()=>step(-1); $('next').onclick=()=>step(1);
+$('zin').onclick=()=>map.zoomIn(); $('zout').onclick=()=>map.zoomOut();
+$('north').onclick=()=>map.easeTo({bearing:0,duration:600});
+$('tHome').onclick=home;
+$('t3d').onclick=()=>{
+  is3D=!is3D; $('t3d').classList.toggle('on',is3D);
+  const l=extrusionLayer(); if(l) map.setLayoutProperty(l,'visibility',is3D?'visible':'none');
+  try{map.setLayoutProperty('sel-bld','visibility',is3D?'visible':'none');}catch(e){}
+  map.easeTo({pitch:is3D?60:0,duration:700});
+};
+$('tRoute').onclick=()=>{
+  routeOn=!routeOn; $('tRoute').classList.toggle('on',routeOn);
+  try{map.setLayoutProperty('route','visibility',routeOn?'visible':'none');}catch(e){}
+  if(routeOn){ const b=new maplibregl.LngLatBounds(); ROUTE.forEach(n=>{const p=PLACES.find(x=>x.n===n);b.extend([p.lng,p.lat])}); map.fitBounds(b,{padding:80,pitch:45,duration:1200}); }
+};
+$('tSpin').onclick=()=>{ spinning=!spinning; $('tSpin').classList.toggle('on',spinning); if(spinning) spin(); };
+['mousedown','touchstart','wheel'].forEach(ev=>map.getCanvasContainer().addEventListener(ev,()=>{ if(spinning) stopSpin(); },{passive:true}));
+buildMarkers();
+applyFilter();
+fetch('https://tiles.openfreemap.org/styles/liberty',{cache:'no-store'}).then(r=>{ if(!r.ok) throw 0; }).catch(()=>{
+  $('err').innerHTML='지금 화면에서는 지도 서버 접속이 막혀 있어요.<br><br><b>Claude 앱 미리보기</b>나 파일 앱 미리보기에서는 외부 지도를 불러올 수 없어요.<br>크롬·사파리 같은 브라우저에서 열어주세요.';
+  $('err').style.display='flex';
+});
+setTimeout(()=>{ if(!map.isStyleLoaded() && $('err').style.display!=='flex'){ $('err').innerHTML='지도를 불러오는 데 시간이 오래 걸려요.<br>인터넷 연결을 확인한 뒤 새로고침해 주세요.'; $('err').style.display='flex'; } },20000);
+</script>
+</body>
+</html>
